@@ -3452,14 +3452,14 @@
         const appState = new AppState();
 
         // Gestion du formulaire de connexion
-        document.addEventListener('submit', (e) => {
+        document.addEventListener('submit', async (e) => {
             if (e.target.id === 'loginForm') {
                 e.preventDefault();
                 const email = document.getElementById('email').value;
                 const password = document.getElementById('password').value;
                 const errorDiv = document.getElementById('loginError');
 
-                if (appState.login(email, password)) {
+                if (await appState.login, password)) {
                     appState.render();
 
                     // Afficher la notification de documents en attente pour manager/admin
