@@ -4110,7 +4110,7 @@
             document.body.appendChild(modal);
 
             // Gestionnaire de soumission
-            document.getElementById('addUserForm').addEventListener('submit', (e) => {
+            document.getElementById('addUserForm').addEventListener('submit', async(e) => {
                 e.preventDefault();
 
                 const prenom = document.getElementById('newUserPrenom').value;
@@ -4139,7 +4139,27 @@
                     showNotification('Sélectionnez au moins un rôle', 'error');
                     return;
                 }
+try {
+                    // Créer l'utilisateur via l'API Railway
+                    await ApiClient.register({
+                        email: email,
+                        password: password,
+                        firstName: prenom,
+                        lastName: nom,
+                        phone: phone,
+                        position: poste,
+                        department: '',
+                        role: roles[0]
+                    });
 
+                    showNotification('Utilisateur créé avec succès', 'success');
+                    modal.remove();
+                    appState.render();
+                } catch (error) {
+                    console.error('Erreur création utilisateur:', error);
+                    showNotification('Erreur: ' + error.message, 'error');
+                }
+            };
                 // Parser les équipes
                 const teams = teamsInput ? teamsInput.split(',').map(t => t.trim()).filter(t => t) : [];
 
