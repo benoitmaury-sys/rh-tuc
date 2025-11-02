@@ -4159,7 +4159,7 @@ try {
                     console.error('Erreur création utilisateur:', error);
                     showNotification('Erreur: ' + error.message, 'error');
                 }
-            };
+            });
                 // Parser les équipes
                 const teams = teamsInput ? teamsInput.split(',').map(t => t.trim()).filter(t => t) : [];
 
