@@ -3459,7 +3459,8 @@
                 const password = document.getElementById('password').value;
                 const errorDiv = document.getElementById('loginError');
 
-                if (await appState.login, password)) {
+                const success = await appState.login(email, password);
+                if (success) {
                     appState.render();
 
                     // Afficher la notification de documents en attente pour manager/admin
