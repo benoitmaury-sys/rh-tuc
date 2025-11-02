@@ -41,6 +41,12 @@ const User = sequelize.define('User', {
   address: {
     type: DataTypes.STRING
   },
+  department: {
+    type: DataTypes.STRING
+  },
+  position: {
+    type: DataTypes.STRING
+  },
   joinDate: {
     type: DataTypes.DATE,
     defaultValue: DataTypes.NOW
@@ -72,6 +78,30 @@ const User = sequelize.define('User', {
   reminders: {
     type: DataTypes.JSONB,
     defaultValue: []
+  },
+  contractType: {
+    type: DataTypes.STRING,
+    defaultValue: 'permanent_tuc'
+  },
+  hasRTT: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: true
+  },
+  teams: {
+    type: DataTypes.JSONB,
+    defaultValue: []
+  },
+  menuPermissions: {
+    type: DataTypes.JSONB,
+    defaultValue: {}
+  },
+  showEmail: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: true
+  },
+  showPhone: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: true
   }
 }, {
   tableName: 'users',
