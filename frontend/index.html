@@ -4160,46 +4160,7 @@ try {
                     showNotification('Erreur: ' + error.message, 'error');
                 }
             });
-                // Parser les équipes
-                const teams = teamsInput ? teamsInput.split(',').map(t => t.trim()).filter(t => t) : [];
-
-                // Calculer les congés
-                const leaveInfo = calculateAcquiredLeave(dateEntree, settings.referencePeriod, settings.acquisitionPerMonth);
-
-                // Créer le nouvel utilisateur
-                const newUser = {
-                    id: Date.now(),
-                    email,
-                    password,
-                    nom,
-                    prenom,
-                    role: roles[0],
-                    roles,
-                    managerId: null,
-                    contractType,
-                    dateEntree,
-                    soldeConges: leaveInfo.acquired || 30,
-                    soldeRTT: 0,
-                    hasRTT: contractType === 'permanent_tuc',
-                    phone,
-                    address: '',
-                    poste,
-                    documents: [],
-                    documentRequests: [],
-                    recoveryHours: contractType === 'permanent_tuc_vacances' ? [] : undefined,
-                    showEmail: true,
-                    showPhone: true,
-                    teams
-                };
-
-                users.push(newUser);
-                storage.setItem('users', JSON.stringify(users));
-
-                showNotification('Utilisateur créé avec succès', 'success');
-                modal.remove();
-                appState.render();
-            });
-        }
+                }
 
         function editUser(userId) {
             const users = JSON.parse(storage.getItem('users'));
