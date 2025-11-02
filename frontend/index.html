@@ -4361,6 +4361,24 @@ try {
 
                 try {
                     // Préparer les données pour l'API
+                   try {
+                    // Récupérer les valeurs RTT
+                    const hasRTT = document.getElementById('editUserHasRTT')?.checked || false;
+                    const soldeRTT = hasRTT ? parseInt(document.getElementById('editUserRTTSolde')?.value) || 0 : 0;
+                    
+                    // Récupérer le solde de congés
+                    const soldeConges = parseInt(document.getElementById('editUserCongesSolde')?.value) || 25;
+                    
+                    // Collecter les permissions de menu
+                    const menuPermissions = {};
+                    ['dashboard', 'profile', 'leave-management', 'manager-space', 'document-validation', 'directory', 'settings'].forEach(menuId => {
+                        const checkbox = document.getElementById(`menu_${menuId}`);
+                        if (checkbox) {
+                            menuPermissions[menuId] = checkbox.checked;
+                        }
+                    });
+
+                    // Préparer les données pour l'API
                     const userData = {
                         firstName: prenom,
                         lastName: nom,
@@ -4368,9 +4386,29 @@ try {
                         phone: phone,
                         position: poste,
                         department: '',
-                        roles: roles
+                        roles: roles,
+                        rttRestants: soldeRTT,
+                        congesRestants: soldeConges
                     };
 
+                    // Si un nouveau mot de passe est fourni, l'ajouter
+                    if (password && password.trim() !== '') {
+                        userData.password = password;
+                    }
+
+                    // Mettre à jour via l'API
+                    await ApiClient.updateUser(userId, userData);
+
+                    showNotification('Utilisateur modifié avec succès', 'success');
+                    modal.remove();
+
+                    // Resynchroniser les utilisateurs
+                    await syncUsersFromAPI();
+                    appState.render();
+                } catch (error) {
+                    console.error('Erreur modification utilisateur:', error);
+                    showNotification('Erreur: ' + error.message, 'error');
+                }
                     // Si un nouveau mot de passe est fourni, l'ajouter
                     if (password && password.trim() !== '') {
                         userData.password = password;
