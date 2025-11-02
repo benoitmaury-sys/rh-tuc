@@ -102,6 +102,55 @@
                 ApiClient.setToken(token);
             }
         });
+// ============================================
+        // CONVERSION ET SYNCHRONISATION UTILISATEURS
+        // ============================================
+
+        function convertBackendUserToFrontend(backendUser) {
+            return {
+                id: backendUser.id,
+                email: backendUser.email,
+                nom: backendUser.lastName || '',
+                prenom: backendUser.firstName || '',
+                role: backendUser.roles && backendUser.roles[0] ? backendUser.roles[0] : 'collaborateur',
+                roles: backendUser.roles || ['collaborateur'],
+                phone: backendUser.phone || '',
+                address: backendUser.address || '',
+                poste: backendUser.position || '',
+                department: backendUser.department || '',
+                managerId: backendUser.managerId || null,
+                contractType: 'permanent_tuc',
+                dateEntree: backendUser.joinDate ? backendUser.joinDate.split('T')[0] : new Date().toISOString().split('T')[0],
+                soldeConges: backendUser.congesRestants || 25,
+                soldeRTT: backendUser.rttRestants || 0,
+                hasRTT: true,
+                documents: backendUser.documents || [],
+                documentRequests: backendUser.documentRequests || [],
+                showEmail: true,
+                showPhone: true,
+                teams: []
+            };
+        }
+
+        async function syncUsersFromAPI() {
+            try {
+                console.log('🔄 Synchronisation des utilisateurs depuis PostgreSQL...');
+                const backendUsers = await ApiClient.getUsers();
+                console.log('📥 Utilisateurs reçus:', backendUsers.length);
+
+                const frontendUsers = backendUsers.map(u => convertBackendUserToFrontend(u));
+                storage.setItem('users', JSON.stringify(frontendUsers));
+
+                console.log('✅ Utilisateurs synchronisés dans localStorage');
+                return frontendUsers;
+            } catch (error) {
+                console.error('❌ Erreur synchronisation utilisateurs:', error);
+                // En cas d'erreur, garder les utilisateurs existants
+                return JSON.parse(storage.getItem('users') || '[]');
+            }
+        }
+
+                
     </script>
     <style>
         @keyframes fadeIn {
@@ -429,125 +478,8 @@
             init() {
                 // Initialiser les données par défaut si nécessaire
                 if (!storage.getItem('users')) {
-                    const defaultUsers = [
-                        {
-                            id: 1,
-                            email: 'admin@entreprise.fr',
-                            password: 'admin123',
-                            nom: 'Administrateur',
-                            prenom: 'Système',
-                            role: 'admin',
-                            roles: ['admin', 'manager', 'collaborateur'], // Admin a tous les rôles
-                            managerId: null,
-                            contractType: 'permanent_tuc',
-                            soldeConges: 25,
-                            soldeRTT: 0,
-                            hasRTT: false,
-                            phone: '',
-                            address: '',
-                            poste: 'Administrateur Système',
-                            documents: [],
-                            documentRequests: [],
-                            showEmail: true,
-                            showPhone: true,
-                            teams: []
-                        },
-                        {
-                            id: 2,
-                            email: 'jean.dupont@entreprise.fr',
-                            password: 'user123',
-                            nom: 'Dupont',
-                            prenom: 'Jean',
-                            role: 'collaborateur',
-                            roles: ['collaborateur', 'manager'], // Multi-profils
-                            managerId: null,
-                            contractType: 'permanent_tuc',
-                            dateEntree: '2020-01-15',
-                            soldeConges: 25,
-                            soldeRTT: 12,
-                            hasRTT: true,
-                            phone: '06 12 34 56 78',
-                            address: '123 Rue de Toulouse, 31000 Toulouse',
-                            poste: 'Responsable Développement',
-                            documents: [],
-                            documentRequests: [],
-                            showEmail: true,
-                            showPhone: true,
-                            teams: ['développement']
-                        },
-                        {
-                            id: 3,
-                            email: 'manager@entreprise.fr',
-                            password: 'manager123',
-                            nom: 'Dubois',
-                            prenom: 'Sophie',
-                            role: 'manager',
-                            roles: ['manager', 'collaborateur'],
-                            managerId: null,
-                            contractType: 'permanent_tuc',
-                            dateEntree: '2019-06-01',
-                            soldeConges: 25,
-                            soldeRTT: 8,
-                            hasRTT: true,
-                            phone: '06 45 67 89 01',
-                            address: '789 Boulevard TUC, 31200 Toulouse',
-                            poste: 'Responsable RH',
-                            documents: [],
-                            documentRequests: [],
-                            showEmail: true,
-                            showPhone: false,
-                            teams: ['rh', 'management']
-                        },
-                        {
-                            id: 4,
-                            email: 'marie.martin@entreprise.fr',
-                            password: 'user123',
-                            nom: 'Martin',
-                            prenom: 'Marie',
-                            role: 'collaborateur',
-                            roles: ['collaborateur'],
-                            managerId: 3, // Géré par Sophie Dubois
-                            contractType: 'permanent_tuc_vacances',
-                            dateEntree: '2024-03-01',
-                            soldeConges: 0,
-                            soldeRTT: 0,
-                            hasRTT: false,
-                            phone: '06 98 76 54 32',
-                            address: '456 Avenue du TUC, 31100 Toulouse',
-                            poste: 'Animateur Vacances',
-                            documents: [],
-                            documentRequests: [],
-                            recoveryHours: [],
-                            showEmail: true,
-                            showPhone: true,
-                            teams: ['animation']
-                        },
-                        {
-                            id: 5,
-                            email: 'pierre.bernard@entreprise.fr',
-                            password: 'user123',
-                            nom: 'Bernard',
-                            prenom: 'Pierre',
-                            role: 'collaborateur',
-                            roles: ['collaborateur'],
-                            managerId: 2, // Géré par Jean Dupont
-                            contractType: 'permanent_tuc',
-                            dateEntree: '2023-09-01',
-                            soldeConges: 25,
-                            soldeRTT: 5,
-                            hasRTT: true,
-                            phone: '06 23 45 67 89',
-                            address: '321 Rue du Sport, 31000 Toulouse',
-                            poste: 'Développeur Junior',
-                            documents: [],
-                            documentRequests: [],
-                            showEmail: false,
-                            showPhone: false,
-                            teams: ['développement']
-                        }
-                    ];
-                    storage.setItem('users', JSON.stringify(defaultUsers));
-                }
+        storage.setItem('users', JSON.stringify([]));
+    }
 
                 if (!storage.getItem('leaveRequests')) {
                     storage.setItem('leaveRequests', JSON.stringify([]));
@@ -636,31 +568,24 @@
             }
 
             async login(email, password) {
-    try {
-        const data = await ApiClient.login(email, password);
+                try {
+                    const data = await ApiClient.login(email, password);
 
-        // Convertir l'utilisateur backend en format frontend
-        this.currentUser = {
-            id: data.user.id,
-            email: data.user.email,
-            nom: data.user.lastName,
-            prenom: data.user.firstName,
-            role: data.user.roles[0] || 'collaborateur',
-            roles: data.user.roles,
-            poste: data.user.position || '',
-            department: data.user.department || ''
-        };
+                    this.currentUser = convertBackendUserToFrontend(data.user);
+                    storage.setItem('currentUser', JSON.stringify(this.currentUser));
+                    this.viewMode = this.currentUser.role;
+                    this.currentView = this.currentUser.role === 'admin' ? 'admin-dashboard' : 'user-dashboard';
 
-        localStorage.setItem('currentUser', JSON.stringify(this.currentUser));
-        this.viewMode = this.currentUser.role;
-        this.currentView = this.currentUser.role === 'admin' ? 'admin-dashboard' : 'user-dashboard';
+                    // Synchroniser tous les utilisateurs depuis l'API
+                    await syncUsersFromAPI();
 
-        return true;
-    } catch (error) {
-        console.error('Login error:', error);
-        return false;
-    }
-}
+                    return true;
+                } catch (error) {
+                    console.error('Login error:', error);
+                    return false;
+                }
+            }
+
 
 
             logout() {
