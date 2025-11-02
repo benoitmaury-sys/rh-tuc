@@ -96,8 +96,20 @@
 
             async getUsers() {
                 return await this.request('/api/users');
+            },
+
+            async updateUser(id, userData) {
+                return await this.request(`/api/users/${id}`, {
+                    method: 'PUT',
+                    body: JSON.stringify(userData)
+                });
+            },
+
+            async deleteUser(id) {
+                return await this.request(`/api/users/${id}`, {
+                    method: 'DELETE'
+                });
             }
-        };
 
         // Charger le token au démarrage
         document.addEventListener('DOMContentLoaded', () => {
@@ -4326,7 +4338,7 @@ try {
             document.body.appendChild(modal);
 
             // Gestionnaire de soumission
-            document.getElementById('editUserForm').addEventListener('submit', (e) => {
+        document.getElementById('editUserForm').addEventListener('submit', async (e) => {
                 e.preventDefault();
 
                 const prenom = document.getElementById('editUserPrenom').value;
@@ -4335,19 +4347,6 @@ try {
                 const password = document.getElementById('editUserPassword').value;
                 const poste = document.getElementById('editUserPoste').value;
                 const phone = document.getElementById('editUserPhone').value;
-                const structure = document.getElementById('editUserStructure').value;
-                const typeContrat = document.getElementById('editUserTypeContrat').value;
-                const contractType = document.getElementById('editUserContract').value;
-                const dateEntree = document.getElementById('editUserDateEntree').value;
-                const managerIdValue = document.getElementById('editUserManager').value;
-                const managerId = managerIdValue ? parseInt(managerIdValue) : null;
-                const teamsInput = document.getElementById('editUserTeams').value;
-
-                // Vérifier si l'email existe déjà (sauf si c'est le même utilisateur)
-                if (users.some(u => u.email === email && u.id !== userId)) {
-                    showNotification('Cet email est déjà utilisé par un autre utilisateur', 'error');
-                    return;
-                }
 
                 // Collecter les rôles
                 const roles = [];
@@ -4360,65 +4359,36 @@ try {
                     return;
                 }
 
-                // Parser les équipes
-                const teams = teamsInput ? teamsInput.split(',').map(t => t.trim()).filter(t => t) : [];
+                try {
+                    // Préparer les données pour l'API
+                    const userData = {
+                        firstName: prenom,
+                        lastName: nom,
+                        email: email,
+                        phone: phone,
+                        position: poste,
+                        department: '',
+                        roles: roles
+                    };
 
-                // Récupérer les valeurs RTT
-                const hasRTT = document.getElementById('editUserHasRTT').checked;
-                const soldeRTT = hasRTT ? parseInt(document.getElementById('editUserRTTSolde').value) || 0 : 0;
-
-                // Collecter les permissions de menu
-                const menuPermissions = {};
-                ['dashboard', 'profile', 'leave-management', 'manager-space', 'document-validation', 'directory', 'settings'].forEach(menuId => {
-                    const checkbox = document.getElementById(`menu_${menuId}`);
-                    if (checkbox) {
-                        menuPermissions[menuId] = checkbox.checked;
+                    // Si un nouveau mot de passe est fourni, l'ajouter
+                    if (password && password.trim() !== '') {
+                        userData.password = password;
                     }
-                });
 
-                // Recalculer les congés si la date d'entrée a changé
-                let soldeConges = user.soldeConges;
-                if (dateEntree !== user.dateEntree) {
-                    const leaveInfo = calculateAcquiredLeave(dateEntree, settings.referencePeriod, settings.acquisitionPerMonth);
-                    soldeConges = leaveInfo.acquired || 30;
+                    // Mettre à jour via l'API
+                    await ApiClient.updateUser(userId, userData);
+
+                    showNotification('Utilisateur modifié avec succès', 'success');
+                    modal.remove();
+
+                    // Resynchroniser les utilisateurs
+                    await syncUsersFromAPI();
+                    appState.render();
+                } catch (error) {
+                    console.error('Erreur modification utilisateur:', error);
+                    showNotification('Erreur: ' + error.message, 'error');
                 }
-
-                // Mettre à jour l'utilisateur
-                const updatedUser = {
-                    ...user,
-                    prenom,
-                    nom,
-                    email,
-                    poste,
-                    phone,
-                    structure,
-                    typeContrat,
-                    contractType,
-                    dateEntree,
-                    managerId,
-                    roles,
-                    role: roles[0], // Le rôle principal est le premier dans la liste
-                    teams,
-                    soldeConges,
-                    hasRTT,
-                    soldeRTT,
-                    menuPermissions,
-                    recoveryHours: contractType === 'permanent_tuc_vacances' ? (user.recoveryHours || []) : undefined
-                };
-
-                // Mettre à jour le mot de passe uniquement s'il a été modifié
-                if (password) {
-                    updatedUser.password = password;
-                }
-
-                // Remplacer l'utilisateur dans la liste
-                const userIndex = users.findIndex(u => u.id === userId);
-                users[userIndex] = updatedUser;
-                storage.setItem('users', JSON.stringify(users));
-
-                showNotification('Utilisateur modifié avec succès', 'success');
-                modal.remove();
-                appState.render();
             });
         }
 
