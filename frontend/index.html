@@ -1,5 +1,88 @@
 <!DOCTYPE html>
 <html lang="fr">
+<script>
+        // ============================================
+        // API CLIENT - Connexion au backend Railway
+        // ============================================
+        const ApiClient = {
+            baseURL: API_CONFIG.baseURL,
+            token: null,
+
+            setToken(token) {
+                this.token = token;
+                if (token) {
+                    localStorage.setItem('authToken', token);
+                } else {
+                    localStorage.removeItem('authToken');
+                }
+            },
+
+            async request(endpoint, options = {}) {
+                const url = `${this.baseURL}${endpoint}`;
+                const headers = {
+                    'Content-Type': 'application/json',
+                    ...options.headers
+                };
+
+                if (this.token) {
+                    headers['Authorization'] = `Bearer ${this.token}`;
+                }
+
+                const config = {
+                    ...options,
+                    headers
+                };
+
+                try {
+                    const response = await fetch(url, config);
+                    const data = await response.json();
+
+                    if (!response.ok) {
+                        throw new Error(data.error || data.message || 'Erreur réseau');
+                    }
+
+                    return data;
+                } catch (error) {
+                    console.error('API Error:', error);
+                    throw error;
+                }
+            },
+
+            async login(email, password) {
+                const data = await this.request('/api/auth/login', {
+                    method: 'POST',
+                    body: JSON.stringify({ email, password })
+                });
+
+                if (data.token) {
+                    this.setToken(data.token);
+                }
+
+                return data;
+            },
+
+            async register(userData) {
+                const data = await this.request('/api/auth/register', {
+                    method: 'POST',
+                    body: JSON.stringify(userData)
+                });
+
+                if (data.token) {
+                    this.setToken(data.token);
+                }
+
+                return data;
+            }
+        };
+
+        // Charger le token au démarrage
+        document.addEventListener('DOMContentLoaded', () => {
+            const token = localStorage.getItem('authToken');
+            if (token) {
+                ApiClient.setToken(token);
+            }
+        });
+    </script>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -17,6 +100,7 @@
             }
         }
     </script>
+     <script src="config.js"></script>
     <style>
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
@@ -549,18 +633,33 @@
                 }
             }
 
-            login(email, password) {
-                const users = JSON.parse(storage.getItem('users'));
-                const user = users.find(u => u.email === email && u.password === password);
-                if (user) {
-                    this.currentUser = user;
-                    storage.setItem('currentUser', JSON.stringify(user));
-                    this.viewMode = user.role; // Par défaut, le mode de vue correspond au rôle
-                    this.currentView = user.role === 'admin' ? 'admin-dashboard' : 'user-dashboard';
-                    return true;
-                }
-                return false;
-            }
+            async login(email, password) {
+    try {
+        const data = await ApiClient.login(email, password);
+
+        // Convertir l'utilisateur backend en format frontend
+        this.currentUser = {
+            id: data.user.id,
+            email: data.user.email,
+            nom: data.user.lastName,
+            prenom: data.user.firstName,
+            role: data.user.roles[0] || 'collaborateur',
+            roles: data.user.roles,
+            poste: data.user.position || '',
+            department: data.user.department || ''
+        };
+
+        localStorage.setItem('currentUser', JSON.stringify(this.currentUser));
+        this.viewMode = this.currentUser.role;
+        this.currentView = this.currentUser.role === 'admin' ? 'admin-dashboard' : 'user-dashboard';
+
+        return true;
+    } catch (error) {
+        console.error('Login error:', error);
+        return false;
+    }
+}
+
 
             logout() {
                 this.currentUser = null;
