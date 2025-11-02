@@ -1,6 +1,26 @@
 <!DOCTYPE html>
 <html lang="fr">
-<script>
+
+<head>
+        
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RH TUC - Gestion RH</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#5D5CDE',
+                    }
+                }
+            }
+        }
+    </script>
+     <script src="config.js"></script>
+        <script>
         // ============================================
         // API CLIENT - Connexion au backend Railway
         // ============================================
@@ -83,24 +103,6 @@
             }
         });
     </script>
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RH TUC - Gestion RH</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        primary: '#5D5CDE',
-                    }
-                }
-            }
-        }
-    </script>
-     <script src="config.js"></script>
     <style>
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
