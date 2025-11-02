@@ -4360,18 +4360,15 @@ try {
                 }
 
                 try {
-                    // Récupérer TOUS les champs du formulaire
-                    const contractType = document.getElementById('editUserContract')?.value || 'permanent_tuc';
-                    const dateEntree = document.getElementById('editUserDateEntree')?.value;
+                    // Préparer les données pour l'API
+                   try {
+                    // Récupérer les valeurs RTT
                     const hasRTT = document.getElementById('editUserHasRTT')?.checked || false;
                     const soldeRTT = hasRTT ? parseInt(document.getElementById('editUserRTTSolde')?.value) || 0 : 0;
+                    
+                    // Récupérer le solde de congés
                     const soldeConges = parseInt(document.getElementById('editUserCongesSolde')?.value) || 25;
-                    const structure = document.getElementById('editUserStructure')?.value || '';
-                    const managerIdValue = document.getElementById('editUserManager')?.value;
-                    const managerId = managerIdValue ? managerIdValue : null;
-                    const teamsInput = document.getElementById('editUserTeams')?.value || '';
-                    const teams = teamsInput ? teamsInput.split(',').map(t => t.trim()).filter(t => t) : [];
-
+                    
                     // Collecter les permissions de menu
                     const menuPermissions = {};
                     ['dashboard', 'profile', 'leave-management', 'manager-space', 'document-validation', 'directory', 'settings'].forEach(menuId => {
@@ -4381,41 +4378,18 @@ try {
                         }
                     });
 
-                    // Gérer la photo (base64 depuis le formulaire si modifiée)
-                    let photoData = null;
-                    const photoInput = document.getElementById('editUserPhoto');
-                    if (photoInput && photoInput.files && photoInput.files[0]) {
-                        const reader = new FileReader();
-                        photoData = await new Promise((resolve) => {
-                            reader.onload = (e) => resolve(e.target.result);
-                            reader.readAsDataURL(photoInput.files[0]);
-                        });
-                    }
-
                     // Préparer les données pour l'API
                     const userData = {
                         firstName: prenom,
                         lastName: nom,
                         email: email,
                         phone: phone,
-                        address: '',
                         position: poste,
-                        department: structure,
+                        department: '',
                         roles: roles,
                         rttRestants: soldeRTT,
-                        congesRestants: soldeConges,
-                        contractType: contractType,
-                        hasRTT: hasRTT,
-                        teams: teams,
-                        menuPermissions: menuPermissions,
-                        managerId: managerId,
-                        joinDate: dateEntree
+                        congesRestants: soldeConges
                     };
-
-                    // Ajouter la photo si elle a été modifiée
-                    if (photoData) {
-                        userData.photo = photoData;
-                    }
 
                     // Si un nouveau mot de passe est fourni, l'ajouter
                     if (password && password.trim() !== '') {
@@ -4435,8 +4409,26 @@ try {
                     console.error('Erreur modification utilisateur:', error);
                     showNotification('Erreur: ' + error.message, 'error');
                 }
+                    // Si un nouveau mot de passe est fourni, l'ajouter
+                    if (password && password.trim() !== '') {
+                        userData.password = password;
+                    }
+
+                    // Mettre à jour via l'API
+                    await ApiClient.updateUser(userId, userData);
+
+                    showNotification('Utilisateur modifié avec succès', 'success');
+                    modal.remove();
+
+                    // Resynchroniser les utilisateurs
+                    await syncUsersFromAPI();
+                    appState.render();
+                } catch (error) {
+                    console.error('Erreur modification utilisateur:', error);
+                    showNotification('Erreur: ' + error.message, 'error');
+                }
+            });
         }
-                                                                 }
 
         function manageUserDocuments(userId) {
             const users = JSON.parse(storage.getItem('users'));
