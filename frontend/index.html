@@ -4110,50 +4110,48 @@
             document.body.appendChild(modal);
 
             // Gestionnaire de soumission
-            document.getElementById('addUserForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
+document.getElementById('addUserForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
 
-    const prenom = document.getElementById('newUserPrenom').value;
-    const nom = document.getElementById('newUserNom').value;
-    const email = document.getElementById('newUserEmail').value;
-    const password = document.getElementById('newUserPassword').value;
-    const poste = document.getElementById('newUserPoste').value;
-    const phone = document.getElementById('newUserPhone').value;
-    const contractType = document.getElementById('newUserContract').value;
-    const dateEntree = document.getElementById('newUserDateEntree').value;
+                const prenom = document.getElementById('newUserPrenom').value;
+                const nom = document.getElementById('newUserNom').value;
+                const email = document.getElementById('newUserEmail').value;
+                const password = document.getElementById('newUserPassword').value;
+                const poste = document.getElementById('newUserPoste').value;
+                const phone = document.getElementById('newUserPhone').value;
 
-    // Collecter les rôles
-    const roles = [];
-    if (document.getElementById('roleCollaborateur').checked) roles.push('collaborateur');
-    if (document.getElementById('roleManager').checked) roles.push('manager');
-    if (document.getElementById('roleAdmin').checked) roles.push('admin');
+                // Collecter les rôles
+                const roles = [];
+                if (document.getElementById('roleCollaborateur').checked) roles.push('collaborateur');
+                if (document.getElementById('roleManager').checked) roles.push('manager');
+                if (document.getElementById('roleAdmin').checked) roles.push('admin');
 
-    if (roles.length === 0) {
-        showNotification('Sélectionnez au moins un rôle', 'error');
-        return;
-    }
+                if (roles.length === 0) {
+                    showNotification('Sélectionnez au moins un rôle', 'error');
+                    return;
+                }
 
-    try {
-        // Créer l'utilisateur via l'API Railway
-        await ApiClient.register({
-            email,
-            password,
-            firstName: prenom,
-            lastName: nom,
-            phone,
-            position: poste,
-            department: '',
-            role: roles[0]  // Prendre le premier rôle sélectionné
-        });
+                try {
+                    // Créer l'utilisateur via l'API Railway
+                    await ApiClient.register({
+                        email: email,
+                        password: password,
+                        firstName: prenom,
+                        lastName: nom,
+                        phone: phone,
+                        position: poste,
+                        department: '',
+                        role: roles[0]
+                    });
 
-        showNotification('Utilisateur créé avec succès', 'success');
-        document.getElementById('addUserModal').remove();
-        appState.render();
-    } catch (error) {
-        console.error('Erreur création utilisateur:', error);
-        showNotification('Erreur lors de la création: ' + error.message, 'error');
-    }
-});
+                    showNotification('Utilisateur créé avec succès', 'success');
+                    modal.remove();
+                    appState.render();
+                } catch (error) {
+                    console.error('Erreur création utilisateur:', error);
+                    showNotification('Erreur: ' + error.message, 'error');
+                }
+            });
 
                 // Vérifier si l'email existe déjà
                 if (users.some(u => u.email === email)) {
