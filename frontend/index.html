@@ -93,6 +93,9 @@
 
                 return data;
             }
+                async getUsers() {
+                return await this.request('/api/users');
+            }
         };
 
         // Charger le token au démarrage
